@@ -1,6 +1,7 @@
 
 # DevOps12 Professional Course Repository
 
+## Introduction
 This project is intended for the Technion DevOps Course.
 
 ## 🚀 About Me

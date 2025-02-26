@@ -2,15 +2,20 @@
 # DevOps12 Professional Course Repository
 
 ## Introduction
-This project is intended for the Technion DevOps Course.
+Welcome to my DevOps12 Professional Course Repository.
 
+📌 This repository contains homework, projects, and exercises completed during the DevOps12 Professional Course.
+
+## 📁 Folder Structure
+   - assets/ - Images and resources used in documentation.
+   - bash/   - bash scripts and automations tasks.
+     
 ## 🚀 About Me
 My name is not important. What is important is My name.
 
 ## Author
-
-- [@mendelsontal](assets/DevOps.jpg)
-
-<div align="center">
-  <img src="https://github.com/mendelsontal/devops_course/blob/main/DevOps.jpg" alt="Logo" width="400"/>
+[@mendelsontal]()
+<div align="left">
+  <img src="assets/DevOps.jpg" alt="Logo" width="300"/>
 </div>
+

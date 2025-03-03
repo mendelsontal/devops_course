@@ -58,110 +58,102 @@ fi
 ##########   <Run as root function END>   ##########
 #------------------------------------------------------------------#
 
-##########  <Logs function START>  ##########
+#########  <Logs function START>  ##########
 function logit() {
 ### Description: Logs messages to a file with levels (INFO, DEBUG, ERROR)
-### Usage:
+### Usage: logit <LEVEL> "Your message here"
 
 if [[ "$1" == "help" ]]; then
-        # Colors
-        local RESET="\033[0m"
-        local BOLD="\033[1m"
-        local CYAN="\033[36m"
-        local GREEN="\033[32m"
-        local YELLOW="\033[33m"
-        local RED="\033[31m"
-
-        # Print help message with color
-        printf "${BOLD}${CYAN}The logit function logs messages to a log file with customizable log levels (INFO, DEBUG, WARN, ERROR). By default, logs are saved in /var/log with a file name based on the script name. Both the log folder and file name can be overridden.${RESET}\n\n"
-        printf "${BOLD}${CYAN}Usage:${RESET}\n\n"
-        printf "${GREEN}To start logging:${RESET}\n"
-        printf "    logit start\n\n"
-        printf "${GREEN}To log a message:${RESET}\n"
-        printf "    logit <LEVEL> \"<MESSAGE>\"\n"
-        printf "    Replace <LEVEL> with one of: INFO, DEBUG, WARN, ERROR.\n"
-        printf "    Replace <MESSAGE> with the text you want to log.\n\n"
-        printf "${GREEN}To override the log directory and file name by calling the function before:${RESET}\n"
-        printf "    You can set the environment variables LOGDIR for the directory\n"
-        printf "    You can set the environment variables LOGFILE for the file name\n"
-        printf "    ${YELLOW}Examples:${RESET}\n\n"
-        printf '    export LOGDIR="/home/tal/"\n'
-        printf '    export LOGFILE="/home/tal/blabla.txt"\n\n'
-        
-        return
-    fi
+    # Colors
+    local RESET="\033[0m"
+    local BOLD="\033[1m"
+    local CYAN="\033[36m"
+    local GREEN="\033[32m"
+    local YELLOW="\033[33m"
+    
+    # Help text with colors
+    printf "${BOLD}${CYAN}Usage:${RESET}\n"
+    printf "  logit start                ${GREEN}# Start logging all executed commands${RESET}\n"
+    printf "  logit <LEVEL> <MESSAGE>    ${GREEN}# Log a message with level INFO, DEBUG, WARN, ERROR${RESET}\n"
+    printf "\n"
+    printf "  ${YELLOW}Example:${RESET}\n"
+    printf "  logit INFO \"Application started\"\n"
+    printf "  logit ERROR \"Something went wrong\"\n"
+    printf "\n"
+    printf "  ${GREEN}To override the log location, set:${RESET}\n"
+    printf "  export LOGDIR=/path/to/logs\n"
+    printf "  export LOGFILE=/path/to/logfile.log\n"
+    printf "\n"
+    return
+fi
 
 # Default log directory (can be overridden)
-    LOGDIR="${LOGDIR:-/var/log}"
+LOGDIR="${LOGDIR:-/var/log}"
 
-    # Determine script name of the caller
-    CALLER_SCRIPT="$(basename "${BASH_SOURCE[1]}" .sh)"
+# Determine script name of the caller
+CALLER_SCRIPT="$(basename "${BASH_SOURCE[1]}" .sh)"
 
-    # Default log file: Uses $LOGFILE if set, otherwise based on caller script
-    LOGFILE="${LOGFILE:-$LOGDIR/$CALLER_SCRIPT.log}"
+# Default log file: Uses $LOGFILE if set, otherwise based on caller script
+LOGFILE="${LOGFILE:-$LOGDIR/$CALLER_SCRIPT.log}"
 
-    # Ensure log directory exists
-    [ ! -d "$LOGDIR" ] && mkdir -p "$LOGDIR"
+# Ensure log directory exists
+if [ ! -d "$LOGDIR" ]; then
+    mkdir -p "$LOGDIR" || { echo "ERROR: Failed to create log directory $LOGDIR" >&2; return 1; }
+fi
 
-    # Ensure the log file exists
-    touch "$LOGFILE" || { echo "ERROR: Cannot write to $LOGFILE" >&2; return 1; }
+# Ensure log file is writable
+if ! touch "$LOGFILE" 2>/dev/null; then
+    echo "ERROR: Cannot write to log file $LOGFILE" >&2
+    return 1
+fi
 
-    # Initialize script logging
-    if [[ "$1" == "start" ]]; then
-        logit INFO "Script execution started"
-        # Function to log each command executed
-        log_command() {
-            logit DEBUG "Running command: $BASH_COMMAND"
-        }
-        # Trap every command execution and log it
-        trap 'log_command' DEBUG
-    fi
+# Enable command logging if 'start' is given
+if [[ "$1" == "start" ]]; then
+    echo "Logging started: All commands will be logged."
+    trap 'logit DEBUG "Running command: $BASH_COMMAND"' DEBUG
+    return
+fi
 
-    # Validate input parameters
-    if [[ "$1" == "start" ]]; then
-        return
-    fi
+# Validate log level
+local level="$1"
+local message="${@:2}"  # Capture all remaining arguments as message
 
-    # Validate log level and message
-    local level="$1"
-    local message="$2"
+case "$level" in
+    INFO|DEBUG|WARN|ERROR) ;;
+    *) echo "ERROR: Invalid log level '$level'" >&2; return 1 ;;
+esac
 
-    # List of valid log levels
-    case "$level" in
-        INFO|DEBUG|WARN|ERROR) ;;
-        *) echo "ERROR: Invalid log level '$level'" >&2; return 1 ;;
-    esac
+# Prevent empty messages
+if [[ -z "$message" ]]; then
+    echo "ERROR: Log message cannot be empty" >&2
+    return 1
+fi
 
-    # Prevent empty messages
-    if [[ -z "$message" ]]; then
-        echo "ERROR: Log message cannot be empty" >&2
-        return 1
-    fi
+# Get timestamp with milliseconds
+local timestamp
+timestamp=$(date '+%Y-%m-%d %H:%M:%S')$(printf ".%03d" $(( $(date +%N) / 1000000 )))
 
-    # Get timestamp with milliseconds
-    local timestamp
-    timestamp=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+# Format log entry
+local log_entry="$timestamp [$level] - $message"
 
-    # Format log entry
-    local log_entry="$timestamp [$level] - $message"
+# Log to file
+echo "$log_entry" >> "$LOGFILE"
 
-    # Log to file
-    echo "$log_entry" >> "$LOGFILE"
-
-    # If ERROR, send output to stderr
-    if [[ "$level" == "ERROR" ]]; then
-        echo "$log_entry" >&2
-    else
-        echo "$log_entry"
-    fi
+# If ERROR, send output to stderr
+if [[ "$level" == "ERROR" ]]; then
+    echo "$log_entry" >&2
+else
+    echo "$log_entry"
+fi
 }
 ##########   <Logs function END>   ##########
+
 #------------------------------------------------------------------#
 
 ##########  <Press 2 Continue function START>  ##########
 function continue_press() {
 ### Description: Pauses execution and waits for user input to continue.
-### Usage: 
+### Usage: add continue_press where you wish pauses execution and waits for user input to continue.
     read -n 1 -s -r -p $'\n\e[1;34m > Press any key to continue... <\e[0m\n\n'
     clear
 }
@@ -171,7 +163,7 @@ function continue_press() {
 ##########  <Task print START>  ##########
 function taskprint() {
 ### Description: Prints a formatted task message.
-### Usage: 
+### Usage: taskprint "<task details here>".
     printf "\n\e[1mTASK\e[0m \e[31m%s\e[0m\n" "$*"
 }
 ##########   <Task print START END>   ##########
@@ -180,8 +172,8 @@ function taskprint() {
 ##########  <vi alias START>  ##########
 
 function ensure_vi_alias() {
-### Description: Checks if vi is aliased to vim and sets it globally if missing
-### Usage: 
+### Description: Checks if vi is aliased to vim and sets it globally if missing.
+### Usage: this will be moved to installation script later on.
     # Check if alias already exists
     if ! alias vi 2>/dev/null | grep -q 'vim'; then
         echo 'alias vi="vim"' | tee -a /etc/profile > /dev/null

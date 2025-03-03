@@ -1,8 +1,13 @@
 # Logit - A Lightweight Bash Logging Utility
 
+![Logit Logo](https://img.shields.io/badge/Logit-Bash%20Logging%20Utility-blue)
+
 Logit is a lightweight and configurable Bash logging utility that enables structured logging with levels (INFO, DEBUG, WARN, ERROR). It supports automatic command logging, customizable timestamps, log rotation, and silent mode, making it ideal for script debugging and system monitoring.
 
-### Installation
+---
+
+### 🛠️ **Installation**
+
 1. Download the `logit.sh` script or clone the repository:
 
     ```bash
@@ -16,7 +21,10 @@ Logit is a lightweight and configurable Bash logging utility that enables struct
     source /path/to/logit.sh
     ```
 
-### Usage
+---
+
+### 🚀 **Usage**
+
 To log a message with a specific level, run:
 
 ```bash
@@ -56,7 +64,10 @@ To uninstall (not yet implemented):
 logit uninstall
 ```
 
-### Configuration
+---
+
+### ⚙️ **Configuration**
+
 - **Log Location**: By default, log entries are saved to `/var/log/<script_name>.log`. You can override the log directory and file location by setting the `LOGDIR` and `LOGFILE` environment variables.
 
     ```bash
@@ -76,11 +87,28 @@ logit uninstall
     export LOGIT_SILENT=true
     ```
 
-### Autocompletion
+---
+
+### 🧑‍💻 **Autocompletion**
+
 Logit supports Bash autocompletion for commands like `help`, `version`, `update`, and `uninstall`. Autocompletion is enabled when using an interactive shell.
 
-### License
-This project is licensed under the MIT License.
+---
 
-### Author
+### 📜 **License**
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+---
+
+### 👨‍💻 **Author**
+
 - **Tal Mendelson** - Developer
+
+---
+
+### 📦 **Badges**
+
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)  
+[![Version](https://img.shields.io/badge/Version-0.0.2-blue.svg)](https://github.com/yourusername/logit)
+

@@ -103,12 +103,12 @@ This project is licensed under the [MIT License](https://opensource.org/licenses
 
 ### 👨‍💻 **Author**
 
-- **Tal Mendelson** - Developer
+- **Tal Mendelson**
 
 ---
 
 ### 📦 **Badges**
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)  
-[![Version](https://img.shields.io/badge/Version-0.0.2-blue.svg)](https://github.com/yourusername/logit)
+[![Version](https://img.shields.io/badge/Version-0.0.2-blue.svg)](https://github.com/mendelsontal/devops_course/tree/logit-v0.0.2/bash/logit)
 

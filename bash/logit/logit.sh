@@ -5,7 +5,7 @@
 # Purpose: LOGIT is a lightweight and configurable Bash logging utility that enables structured logging with levels (INFO, DEBUG, WARN, ERROR).                        #
 #          It supports automatic command logging, customizable timestamps, log rotation, and silent mode,making it ideal for script debugging and system monitoring.   #
 # Date:03/03/2025                                                                                                                                                      #
-# Version: 0.0.2                                                                                                                                                       #
+# Version: 0.0.3                                                                                                                                                       #
 ################################################################################ /ᐠ｡ꞈ｡ᐟ\ ################################################################################
 
 # Check if shell is interactive
@@ -31,13 +31,9 @@ if [[ $- == *i* ]]; then
 fi
 
 function logit() {
-# Enable strict error handling
-set -o errexit
-set -o pipefail
-
 ### Description: Logs messages to a file with levels (INFO, DEBUG, ERROR)
 ### Version:
-LOGIT_VERSION="0.0.2"
+LOGIT_VERSION="0.0.3"
 
 # Bold text for usage message
 local BOLD='\033[1m'
@@ -75,7 +71,7 @@ fi
 
 # Version
 if [[ "$1" == "version" ]]; then
-    printf "Installed logit version: ${BOLD}${GREEN}$LOGIT_VERSION.${RESET}\n"
+    printf "Installed Logit version: ${BOLD}${GREEN}$LOGIT_VERSION${RESET}\n"
     return
 fi
 
@@ -87,7 +83,142 @@ fi
 
 # Update
 if [[ "$1" == "update" ]]; then
-    echo "Update"
+    # URL where the latest version is stored
+    VERSION_URL="https://raw.githubusercontent.com/mendelsontal/devops_course/refs/heads/main/bash/logit/logit.sh"
+    # Fetch the latest version from the URL
+    LATEST_VERSION=$(curl -s "$VERSION_URL" | grep -oP 'LOGIT_VERSION="\K[^"]+')
+
+    if [ -z "$LATEST_VERSION" ]; then
+    printf "\n${BOLD}${RED}ERROR - Could not determine latest version from:${RESET}\n${VERSION_URL}\n\n"
+    return 1
+    fi
+
+    # Local check
+    LOCAL_FILE="~/bin/logit.sh"
+
+    if [ -f "$LOCAL_FILE" ]; then
+        local_version=$(sed -n 's/^LOGIT_VERSION="\([0-9.]*\)"$/\1/p' "$LOCAL_FILE")
+        printf "LOGIT - Local - Version: $local_version\n"
+        if [ "$(echo -e "$local_version\n$LATEST_VERSION" | sort -V | head -n 1)" = "$local_version" ] && [ "$local_version" != "$LATEST_VERSION" ]; then
+            local_update_available='true'
+        else 
+            local_update_available='false'
+        fi
+    else
+        local_installed='false'
+    fi
+
+    # Global check
+    GLOBAL_FILE="/usr/local/bin/logit.sh"
+
+    if [ -f "$GLOBAL_FILE" ]; then
+        global_version=$(sed -n 's/^LOGIT_VERSION="\([0-9.]*\)"$/\1/p' "$GLOBAL_FILE")
+        printf "Logit - Global - Version: $global_version\n"
+        if [ "$(echo -e "$global_version\n$LATEST_VERSION" | sort -V | head -n 1)" = "$global_version" ] && [ "$global_version" != "$LATEST_VERSION" ]; then
+            global_update_available='true'
+        else 
+            global_update_available='false'
+        fi
+    else
+        global_installed='false'
+    fi
+
+    # Both have an update available.
+    if [ -n "$local_version" ] && [ -n "$global_version" ] && [ "$local_version" = "true" ] && [ "$global_version" = "true" ]; then
+        printf "Detected Local Version: $local_version\nGlobal Version: $global_version\n"
+
+        # Choices
+        printf "1) Update Global (All users). \n"
+        printf "2) Update Local (Current user only). \n"
+        printf "3) Update both (Global and current user). \n"
+        printf "4) Cancel. \n\n"
+
+    # User choice input
+    read -p "$(echo -e "${BOLD}Please enter your choice ${BLUE}[1/2/3/4]${RESET}: ")" choice
+
+    # Local update found.
+    elif [ -n "$local_version" ] && [ "$local_update_available" = "true" ]; then
+        printf "\n${BOLD}Local Logit update available.${RESET}\n"
+        printf "Current version: $local_version\n"
+        printf "Latest version: $LATEST_VERSION\n\n"
+
+        # Choices - Local
+        printf "1) Update Local (Current user only). \n"
+        printf "2) Cancel. \n\n"
+
+        # User local choice input
+        read -p "$(echo -e "${BOLD}Please enter your choice ${BLUE}[1/2]${RESET}: ")" local_choice
+
+        case $local_choice in
+            1)
+                # Update
+                curl -s "$VERSION_URL" -o "$LOCAL_FILE"
+                local_version=$(sed -n 's/^LOGIT_VERSION="\([0-9.]*\)"$/\1/p' "$LOCAL_FILE")
+
+                if [ "$(echo -e "$local_version\n$LATEST_VERSION" | sort -V | head -n 1)" = "$local_version" ] && [ "$local_version" != "$LATEST_VERSION" ]; then
+                    printf "\n${BOLD}${RED}ERROR${RESET} - Failed to update Logit - Local to version: $LATEST_VERSION\n"
+                else 
+                    printf "\n${BOLD}${GREEN}Success${RESET} - Logit Local has been successfully updated to version: $LATEST_VERSION\n\n"
+                    source "$GLOBAL_FILE"
+                    return
+                fi
+            ;;
+            2)
+                # Cancel
+                printf "Updating Canceled, exiting.\n\n"
+                return 0
+            ;;
+            *)
+                # Catch invalid option
+                printf "\n${RED}${BOLD}Invalid option.${RESET}\n"
+                return 1
+                ;;
+        esac
+
+    # Global update found.
+    elif [ -n "$global_version" ] && [ "$global_update_available" = "true" ]; then
+        printf "\n${BOLD}Global Logit updates available.${RESET}\n"
+        printf "Current version: $global_version\n"
+        printf "Latest version: $LATEST_VERSION\n\n"
+
+    # Choices - Global
+        printf "1) Update Logit Global. \n"
+        printf "2) Cancel. \n\n"
+
+        # User global choice input
+        read -p "$(echo -e "${BOLD}Please enter your choice ${BLUE}[1/2]${RESET}: ")" global_choice
+
+        case $global_choice in
+            1)
+                # Update
+                sudo curl -s "$VERSION_URL" -o "$GLOBAL_FILE"
+                global_version=$(sed -n 's/^LOGIT_VERSION="\([0-9.]*\)"$/\1/p' "$GLOBAL_FILE")
+
+                if [ "$(echo -e "$global_version\n$LATEST_VERSION" | sort -V | head -n 1)" = "$global_version" ] && [ "$global_version" != "$LATEST_VERSION" ]; then
+                    printf "\n${BOLD}${RED}ERROR${RESET} - Failed to update Logit - Global to version: $LATEST_VERSION\n"
+                else 
+                    printf "\n${BOLD}${GREEN}Success${RESET} - Logit Global has been successfully updated to version: $LATEST_VERSION\n\n"
+                    source "$GLOBAL_FILE"
+                    return
+                fi
+            ;;
+            2)
+                # Cancel
+                printf "Updating Canceled, exiting.\n\n"
+                return
+            ;;
+            *)
+                # Catch invalid option
+                printf "\n${RED}${BOLD}Invalid option.${RESET}\n\n"
+                return
+                ;;
+        esac
+
+    # No updates available
+    else
+        printf "${BOLD}${GREEN}No Logit updates available.${RESET}\n\n"
+    fi
+
     return
 fi
 

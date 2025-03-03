@@ -1,6 +1,6 @@
 # Logit - A Lightweight Bash Logging Utility
 
-![Logit Logo](https://img.shields.io/badge/Logit-Bash%20Logging%20Utility-blue)
+<img src="https://img.shields.io/badge/Logit-Bash%20Logging%20Utility-blue" alt="Logit Logo" />
 
 Logit is a lightweight and configurable Bash logging utility that enables structured logging with levels (INFO, DEBUG, WARN, ERROR). It supports automatic command logging, customizable timestamps, log rotation, and silent mode, making it ideal for script debugging and system monitoring.
 
